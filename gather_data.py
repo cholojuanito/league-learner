@@ -11,10 +11,22 @@ class Gatherer:
         self._api.set_riot_api_key(api_key)
         self._data = []
 
-    def main(self, region, summoner_name, n_matches):
+    def main(self, region, summoner_name, n_matches=20):
+        matches = []
+
         self._api.set_default_region(region)
-        sum_resp = self._api.get_summoner(name=summoner_name)
-        print(sum_resp)
+        summoner = self._api.get_summoner(name=summoner_name)
+        match_history = self._api.get_match_history(summoner, end_index=n_matches)
+        print(match_history)
+        for match in match_history:
+            print(f"Mode: {match.mode} and remake {match.is_remake}")
+            if len(matches) >= n_matches:
+                break
+            if match.mode == self._api.GameMode.classic and not match.is_remake:
+                matches.append(match)
+
+        for m in matches:
+            pass
 
     def export_csv(self):
         pass
@@ -37,9 +49,8 @@ if __name__ == "__main__":
                         args = line.split(" ")
                         region = args[0]
                         summoner_name = args[1]
-                        n_matches = args[2]
 
-                        gatherer.main(region, summoner_name, n_matches)
+                        gatherer.main(region, summoner_name)
             except Exception as e:
                 print(f"Exception: {e}")
 
@@ -47,9 +58,8 @@ if __name__ == "__main__":
             # Just a one time request
             region = sys.argv[1]
             summoner_name = sys.argv[2]
-            n_matches = sys.argv[3]
 
-            gatherer.main(region, summoner_name, n_matches)
+            gatherer.main(region, summoner_name)
 
         gatherer.export_csv()
 

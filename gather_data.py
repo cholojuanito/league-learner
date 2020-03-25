@@ -41,7 +41,7 @@ class Gatherer:
             # Get from plat or diamond
             league = self._api.get_challenger_league(queue=self.queue)
 
-        for entry in league.entries:
+        for entry in league.entries[131:150]:
             self.by_summoner_name(entry.summoner.name, n_matches=n_matches)
 
     def by_match_ids(self, match_ids):
@@ -132,11 +132,25 @@ class Gatherer:
         rteam_totals = np.sum(np.asarray(rteam_totals).T, axis=1)
 
         m_info.append(m.duration.seconds)
-        m_info.append(0 if m.blue_team.first_dragon else 1)
-        m_info.append(0 if m.blue_team.first_baron else 1)
-        m_info.append(0 if m.blue_team.first_inhibitor else 1)
-        m_info.append(0 if m.blue_team.first_rift_herald else 1)
-        m_info.append(0 if m.blue_team.first_blood else 1)
+        m_info.append(
+            0 if m.blue_team.first_dragon else 1 if m.red_team.first_dragon else 2
+        )
+        m_info.append(
+            0 if m.blue_team.first_baron else 1 if m.red_team.first_baron else 2
+        )
+        m_info.append(
+            0 if m.blue_team.first_inhibitor else 1 if m.red_team.first_inhibitor else 2
+        )
+        m_info.append(
+            0
+            if m.blue_team.first_rift_herald
+            else 1
+            if m.red_team.first_rift_herald
+            else 2
+        )
+        m_info.append(
+            0 if m.blue_team.first_blood else 1 if m.red_team.first_blood else 2
+        )
         # Blue team stats
         m_info.append(m.blue_team.baron_kills)
         m_info.append(m.blue_team.dragon_kills)
@@ -165,7 +179,7 @@ class Gatherer:
         m_info.append(0 if m.blue_team.win else 1)
 
         self._data.append(m_info)
-        self._match_ids.append(m.id)
+        self._match_ids.append([m.id])
 
     def _filter_matches(self, match_history, n_matches):
         matches = []
@@ -194,12 +208,12 @@ class Gatherer:
         return matches
 
     def export_csv(self):
-        with open(f"data/{self._elo}.csv", "w", newline="") as f:
+        with open(f"data/{self._elo}.csv", "a", newline="") as f:
             writer = csv.writer(f)
             writer.writerows(self._data)
-        with open(f"data/match_ids.csv", "w", newline="") as file:
+        with open(f"data/match_ids.csv", "a", newline="") as file:
             writer = csv.writer(file)
-            writer = csv.writer(self._match_ids)
+            writer.writerows(self._match_ids)
 
 
 if __name__ == "__main__":
